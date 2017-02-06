@@ -1,6 +1,6 @@
 import scrapy
 from scrapy.selector import Selector
-from scra_test.items import ScraTestItem
+from scra_test.items_aqi import ScraAqiItem
 
 class WeatherSpider(scrapy.Spider):
     name = 'aqi'
@@ -34,19 +34,27 @@ class WeatherSpider(scrapy.Spider):
         selector = Selector(response)
         print response.url
         urls = response.url.split('/')
-        content = selector.xpath("//table//td/node()").extract()
+        content = selector.xpath("//table//tr").extract()
+        length = len(content)
         result = []
-        for current in content:
-            result.append(current.replace("\r\n","").replace(" ",""))
+        for idx in range(2 , length + 1):
+            current = selector.xpath("//table//tr[%d]//td//text()"%idx).extract()
+            result_item = []
+            for current_item in current:
+                result_item.append(current_item.replace("\r\n","").replace(" ",""))
+            result.append(result_item)
         print len(result)
-        item = ScraTestItem()
-        item['day_weather'] = result[5]
-        item['day_wind'] = result[15]
-        item['day_temperature'] = result[12].split('<b>')[1].split('</b>')[0]
-        item['night_weather'] = result[9]
-        item['night_wind'] = result[16]
-        item['night_temperature'] = result[13].split('<b>')[1].split('</b>')[0]
-        item['item_id'] = urls[4]+'_'+urls[5].split('.')[0]
-        item['url'] = response.url
-        print urls[4]+'_'+urls[5].split('.')[0]
-        return item
+        items = []
+        for result_item in result:
+            item = ScraAqiItem()
+            item['day_weather'] = result_item[3].split("/")[0]
+            item['day_wind'] = result_item[5].split("/")[0]
+            item['day_temperature'] = result_item[4].split("/")[0]
+            item['night_weather'] = result_item[3].split("/")[1]
+            item['night_wind'] = result_item[5].split("/")[1]
+            item['night_temperature'] = result_item[4].split("/")[1]
+            item['item_id'] = urls[4] + '_' + result_item[1]
+            item['url'] = response.url
+            items.append(item)
+        print len(items)
+        return items
