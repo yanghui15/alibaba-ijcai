@@ -11,17 +11,10 @@ class WeatherSpider(scrapy.Spider):
 
     for y in years:
         for month in range(1,13):
-            mx_days = days[month-1]
-            if(month == 2 and y == 2016):
-                mx_days = 29
-            for day in range(1 , mx_days + 1):
-                str_month = str(month)
-                if(month < 10):
-                    str_month = '0'+str(month)
-                str_day = str(day)
-                if(day < 10):
-                    str_day = '0' + str(day)
-                dates.append(str(y)+''+str_month+''+str_day)
+            str_month = str(month)
+            if(month < 10):
+                str_month = '0'+str(month)
+            dates.append(str(y)+''+str_month)
 
     print dates
 
@@ -35,9 +28,9 @@ class WeatherSpider(scrapy.Spider):
 
     for loc in localities:
         for date in dates:
-            start_urls.append('http://www.tianqihoubao.com/lishi/'+loc+'/'+date+'.html')
+            start_urls.append('http://www.tianqihoubao.com/lishi/'+loc+'/month/'+date+'.html')
 
-    def parse(self, response):
+    def parse_per_day(self, response):
         selector = Selector(response)
         print response.url
         urls = response.url.split('/')
@@ -57,3 +50,33 @@ class WeatherSpider(scrapy.Spider):
         item['url'] = response.url
         print urls[4]+'_'+urls[5].split('.')[0]
         return item
+
+    def parse(self, response):
+        selector = Selector(response)
+        print response.url
+        urls = response.url.split('/')
+        content = selector.xpath("//table//tr").extract()
+        length = len(content)
+        result = []
+        for idx in range(2 , length + 1):
+            current = selector.xpath("//table//tr[%d]//td//text()"%idx).extract()
+            result_item = []
+            for current_item in current:
+                result_item.append(current_item.replace("\r\n","").replace(" ",""))
+            result.append(result_item)
+        print len(result)
+        items = []
+        for result_item in result:
+            item = ScraTestItem()
+            item['day_weather'] = result_item[3].split("/")[0]
+            item['day_wind'] = result_item[5].split("/")[0]
+            item['day_temperature'] = result_item[4].split("/")[0]
+            item['night_weather'] = result_item[3].split("/")[1]
+            item['night_wind'] = result_item[5].split("/")[1]
+            item['night_temperature'] = result_item[4].split("/")[1]
+            item['item_id'] = urls[4] + '_' + result_item[1]
+            item['url'] = response.url
+            items.append(item)
+        print len(items)
+        return items
+
