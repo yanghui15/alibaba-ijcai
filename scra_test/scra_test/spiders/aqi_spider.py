@@ -18,11 +18,12 @@ class WeatherSpider(scrapy.Spider):
 
     print dates
 
-    f = open('locality.txt', 'r')
-    line = f.readline()
-    print line.split(',')
-    localities = line.split(',')
-    localities.remove('alashanmeng')
+    f = open('locality-2.txt', 'r')
+    lines = f.readlines()
+    localities = []
+    for line in lines:
+        localities.append(line.split(',')[1].replace("\n",""))
+    print localities
 
     start_urls = []
 
@@ -47,13 +48,15 @@ class WeatherSpider(scrapy.Spider):
         items = []
         for result_item in result:
             item = ScraAqiItem()
-            item['day_weather'] = result_item[3].split("/")[0]
-            item['day_wind'] = result_item[5].split("/")[0]
-            item['day_temperature'] = result_item[4].split("/")[0]
-            item['night_weather'] = result_item[3].split("/")[1]
-            item['night_wind'] = result_item[5].split("/")[1]
-            item['night_temperature'] = result_item[4].split("/")[1]
-            item['item_id'] = urls[4] + '_' + result_item[1]
+            item['weather_quality'] = result_item[1]
+            item['weather_aqi'] = result_item[2]
+            item['weather_pm25'] = result_item[4]
+            item['weather_pm10'] = result_item[5]
+            item['weather_No2'] = result_item[6]
+            item['weather_So3'] = result_item[7]
+            item['weather_Co'] = result_item[8]
+            item['weather_O3'] = result_item[9]
+            item['item_id'] = urls[4].split('-')[0] + '_' + result_item[0]
             item['url'] = response.url
             items.append(item)
         print len(items)
