@@ -1,6 +1,7 @@
 # coding=utf8
 import pandas as pd
 import matplotlib.pyplot as plt
+import json
 import numpy as np
 import math
 import xgboost as xgb
@@ -43,7 +44,7 @@ def plot_user_pay(user_pay , shop_id):
 
 def generate_user_pay(user_pay , shop_id , time_index):
 	data = user_pay[user_pay['shop_id'] == shop_id]
-	data = data[['date', 'result']]
+	data = data[['date', 'result' , 'name']]
 	data.drop_duplicates(['date'], keep='first', inplace=True)
 	data = data.sort_values('date')
 	# data = pd.merge(time_index, data, on='date', how='outer')
@@ -53,17 +54,43 @@ def generate_user_pay(user_pay , shop_id , time_index):
 	return data
 
 
-#print("# Read user_view")
+print("# Read city_info")
+f = open('locality-2.txt', 'r')
+lines = f.readlines()
+localities = []
+for line in lines:
+	tmp = line.split(',')
+	localities.append([tmp[0] , tmp[1].replace("\n","")])
+print localities
 
-#user_view = pd.read_csv("../dataset/user_view.txt", header=None)
-#extra_user_view = pd.read_csv("../dataset/extra_user_view.txt", header=None)
+city_info = pd.DataFrame(localities)
+city_info.columns = ['city_name','name']
 
-#user_view.columns = ['user_id', 'shop_id', 'time_stamp']
-#extra_user_view.columns = ['user_id', 'shop_id', 'time_stamp']
+print len(city_info)
+print city_info.head(5)
 
-#user_view = user_view.fillna(0)
-#extra_user_view = extra_user_view.fillna(0)
 
+print("# Read aqi_info")
+
+f = open('aqi.jl', 'r')
+lines = f.readlines()
+aqi_result = {}
+for locality in localities:
+	data = []
+	for line in lines:
+		jo = json.loads(line)
+		city_name = jo['item_id'].split('_')[0]
+		if(city_name == locality[1]):
+			data.append([jo['weather_quality'],jo['weather_So3'],
+						 jo['weather_O3'] , jo['weather_pm25'] ,
+						 jo['weather_pm10'] , jo['weather_No2'] , jo['weather_aqi'] , jo['weather_Co'],jo['item_id'].split('_')[1]])
+	print locality[1]
+	if(locality[1] == 'tianmen'):
+		continue
+	tmp = pd.DataFrame(data)
+	tmp.columns = ['weather_quality' , 'weather_So3' , 'weather_O3'  , 'weather_pm25'
+			, 'weather_pm10' , 'weather_No2' , 'weather_aqi' , 'weather_Co' , 'date']
+	aqi_result[locality[1]] = tmp
 
 print("# Read shop_info")
 
@@ -72,6 +99,8 @@ shop_info.columns = ['shop_id', 'city_name', 'location_id', 'per_pay', 'score', 
 shop_info = shop_info.fillna(0)
 
 shop_info = shop_info[['shop_id' , 'city_name']]
+
+shop_info = pd.merge(shop_info , city_info , left_on='city_name')
 
 print shop_info.head(5)
 
@@ -98,6 +127,11 @@ time_index = user_pay[['date']]
 time_index.drop_duplicates('date', keep='first', inplace=True)
 time_index = time_index.sort_values('date')
 
+user_pay = pd.merge(user_pay , shop_info , left_on='shop_id')
+
+print user_pay.head(5)
+print user_pay.tail(5)
+
 shop_id = 1
 
 data = generate_user_pay(user_pay , shop_id , time_index)
@@ -106,10 +140,13 @@ print len(data)
 print data.head(5)
 print data.tail(5)
 
-for shop_id in range(1 , 10):
-	data = generate_user_pay(user_pay, shop_id, time_index)
-	data.to_csv('%d.csv'%shop_id , encoding = 'utf-8' , index = False)
+data = pd.merge(data , aqi_result[shop_info[shop_info['shop_id'] == shop_id]['name']] , left_on='date')
 
+# for shop_id in range(1 , 10):
+# 	data = generate_user_pay(user_pay, shop_id, time_index)
+# 	data.to_csv('%d.csv'%shop_id , encoding = 'utf-8' , index = False)
+
+data.to_csv('%d.csv'%shop_id , encoding = 'utf-8' , index = False)
 print 'complete'
 
 
