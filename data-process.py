@@ -84,7 +84,6 @@ for locality in localities:
 			data.append([jo['weather_quality'],jo['weather_So3'],
 						 jo['weather_O3'] , jo['weather_pm25'] ,
 						 jo['weather_pm10'] , jo['weather_No2'] , jo['weather_aqi'] , jo['weather_Co'],jo['item_id'].split('_')[1]])
-	print locality[1]
 	if(locality[1] == 'tianmen'):
 		continue
 	tmp = pd.DataFrame(data)
@@ -100,7 +99,7 @@ shop_info = shop_info.fillna(0)
 
 shop_info = shop_info[['shop_id' , 'city_name']]
 
-shop_info = pd.merge(shop_info , city_info , left_on='city_name')
+shop_info = pd.merge(shop_info , city_info , on='city_name')
 
 print shop_info.head(5)
 
@@ -127,26 +126,22 @@ time_index = user_pay[['date']]
 time_index.drop_duplicates('date', keep='first', inplace=True)
 time_index = time_index.sort_values('date')
 
-user_pay = pd.merge(user_pay , shop_info , left_on='shop_id')
+user_pay = pd.merge(user_pay , shop_info , on='shop_id')
 
 print user_pay.head(5)
 print user_pay.tail(5)
 
-shop_id = 1
+for shop_id in range(774 , 2001):
+	data = generate_user_pay(user_pay, shop_id, time_index)
+	name = shop_info[shop_info['shop_id'] == shop_id]['name'].values[0]
+	if(name == 'tianmen'):
+		data.to_csv('input/%d.csv' % shop_id, encoding='utf-8', index=False)
+	else:
+		aqi_info = aqi_result[name]
+		data = pd.merge(data, aqi_info, on='date', how='left')
+		data.to_csv('input/%d.csv'%shop_id , encoding = 'utf-8' , index = False)
+	print 'complete %d'%shop_id
 
-data = generate_user_pay(user_pay , shop_id , time_index)
-
-print len(data)
-print data.head(5)
-print data.tail(5)
-
-data = pd.merge(data , aqi_result[shop_info[shop_info['shop_id'] == shop_id]['name']] , left_on='date')
-
-# for shop_id in range(1 , 10):
-# 	data = generate_user_pay(user_pay, shop_id, time_index)
-# 	data.to_csv('%d.csv'%shop_id , encoding = 'utf-8' , index = False)
-
-data.to_csv('%d.csv'%shop_id , encoding = 'utf-8' , index = False)
 print 'complete'
 
 
