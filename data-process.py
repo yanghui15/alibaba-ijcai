@@ -155,7 +155,7 @@ user_pay = pd.merge(user_pay , shop_info , on='shop_id')
 print user_pay.head(5)
 print user_pay.tail(5)
 
-for shop_id in range(774 , 2001):
+for shop_id in range(1 , 2001):
 	data = generate_user_pay(user_pay, shop_id, time_index)
 	data['year'] = data['date'].apply(lambda x: x.split('-')[0])
 	data['month'] = data['date'].apply(lambda x: x.split('-')[1])
