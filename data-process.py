@@ -43,7 +43,7 @@ def plot_user_pay(user_pay , shop_id):
 
 def generate_user_pay(user_pay , shop_id , time_index):
 	data = user_pay[user_pay['shop_id'] == shop_id]
-	data = data[['date', 'result' , 'name']]
+	# data = data[['date', 'result' , 'name']]
 	data.drop_duplicates(['date'], keep='first', inplace=True)
 	data = data.sort_values('date')
 	# data = pd.merge(time_index, data, on='date', how='outer')
