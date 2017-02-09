@@ -119,7 +119,7 @@ for item_a in list_a:
 		shop_info['%s_%s_mean'%(item_a,item_b)] = shop_info['%s_%s_sum'%(item_a,item_b)] / shop_info['%s_%s_count'%(item_a,item_b)]
 		shop_info.drop(['%s_%s_count'%(item_a,item_b),'%s_%s_sum'%(item_a,item_b)], axis=1, inplace=True)
 
-shop_info.drop(['location_id' , 'cate_1_name' , 'cate_1_cate_2' , 'cate_1_cate_2_cate_3' , 'cate_2_name' , 'cate_3_name' , 'city_cate_1' , 'city_cate_1_cate_2' , 'city_cate_1_cate_2_cate_3' , 'location_city_cate_1' , 'location_city_cate_1_cate_2' , 'location_city_cate_1_cate_2_cate_3'], axis=1, inplace=True)
+shop_info.drop(['cate_1_name' , 'cate_1_cate_2' , 'cate_1_cate_2_cate_3' , 'cate_2_name' , 'cate_3_name' , 'city_cate_1' , 'city_cate_1_cate_2' , 'city_cate_1_cate_2_cate_3' , 'location_city_cate_1' , 'location_city_cate_1_cate_2' , 'location_city_cate_1_cate_2_cate_3'], axis=1, inplace=True)
 
 print shop_info.head(5)
 
@@ -157,9 +157,9 @@ print user_pay.tail(5)
 
 for shop_id in range(774 , 2001):
 	data = generate_user_pay(user_pay, shop_id, time_index)
-	data['year'] = data['date'].split('-')[0]
-	data['month'] = data['date'].split('-')[1]
-	data['day'] = data['date'].split('-')[2]
+	data['year'] = data['date'].apply(lambda x: x.split('-')[0])
+	data['month'] = data['date'].apply(lambda x: x.split('-')[1])
+	data['day'] = data['date'].apply(lambda x: x.split('-')[2])
 	name = shop_info[shop_info['shop_id'] == shop_id]['name'].values[0]
 	if(name == 'tianmen'):
 		data.to_csv('input/%d.csv' % shop_id, encoding='utf-8', index=False)
