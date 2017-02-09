@@ -41,7 +41,6 @@ def plot_user_pay(user_pay , shop_id):
 	tmp.plot(x = 'date' , y = ['result','user_count'] , kind='line')
 	plt.show()
 
-
 def generate_user_pay(user_pay , shop_id , time_index):
 	data = user_pay[user_pay['shop_id'] == shop_id]
 	data = data[['date', 'result' , 'name']]
@@ -69,12 +68,12 @@ city_info.columns = ['city_name','name']
 print len(city_info)
 print city_info.head(5)
 
-
 print("# Read aqi_info")
 
 f = open('aqi.jl', 'r')
 lines = f.readlines()
 aqi_result = {}
+
 for locality in localities:
 	data = []
 	for line in lines:
@@ -96,8 +95,33 @@ print("# Read shop_info")
 shop_info = pd.read_csv("%s/dataset/shop_info.txt"%work_path, header=None)
 shop_info.columns = ['shop_id', 'city_name', 'location_id', 'per_pay', 'score', 'comment_cnt', 'shop_level', 'cate_1_name', 'cate_2_name', 'cate_3_name']
 shop_info = shop_info.fillna(0)
+shop_info['cate_3_name'] = shop_info['cate_3_name'].astype(str)
+shop_info['shop_level'] = shop_info['shop_level'].astype(float)
 
-shop_info = shop_info[['shop_id' , 'city_name']]
+shop_info['cate_1_cate_2'] = shop_info['cate_1_name'] + '_' + shop_info['cate_2_name']
+shop_info['cate_1_cate_2_cate_3'] = shop_info['cate_1_cate_2'] + '_' + shop_info['cate_3_name']
+
+shop_info['city_cate_1'] = shop_info['city_name'] + '_' + shop_info['cate_1_name']
+shop_info['city_cate_1_cate_2'] = shop_info['city_name'] + '_' + shop_info['cate_1_cate_2']
+shop_info['city_cate_1_cate_2_cate_3'] = shop_info['city_name'] + '_' + shop_info['cate_1_cate_2_cate_3']
+
+shop_info['location_city_cate_1'] = shop_info['location_id'].astype(str) + '_' + shop_info['city_cate_1']
+shop_info['location_city_cate_1_cate_2'] = shop_info['location_id'].astype(str) + '_' + shop_info['city_cate_1_cate_2']
+shop_info['location_city_cate_1_cate_2_cate_3'] = shop_info['location_id'].astype(str) + '_' + shop_info['city_cate_1_cate_2_cate_3']
+
+list_a = ['per_pay' , 'score' , 'comment_cnt' , 'shop_level']
+list_b = ['cate_1_name' , 'cate_1_cate_2' , 'cate_1_cate_2_cate_3' , 'city_cate_1' , 'city_cate_1_cate_2' , 'city_cate_1_cate_2_cate_3' , 'location_city_cate_1' , 'location_city_cate_1_cate_2' , 'location_city_cate_1_cate_2_cate_3']
+
+for item_a in list_a:
+	for item_b in list_b:
+		shop_info['%s_%s_count'%(item_a,item_b)] = shop_info.groupby('%s'%(item_b))['shop_id'].transform('count')
+		shop_info['%s_%s_sum'%(item_a,item_b)] = shop_info.groupby('%s'%(item_b))['%s'%(item_a)].transform('sum')
+		shop_info['%s_%s_mean'%(item_a,item_b)] = shop_info['%s_%s_sum'%(item_a,item_b)] / shop_info['%s_%s_count'%(item_a,item_b)]
+		shop_info.drop(['%s_%s_count'%(item_a,item_b),'%s_%s_sum'%(item_a,item_b)], axis=1, inplace=True)
+
+shop_info.drop(['location_id' , 'cate_1_name' , 'cate_1_cate_2' , 'cate_1_cate_2_cate_3' , 'cate_2_name' , 'cate_3_name' , 'city_cate_1' , 'city_cate_1_cate_2' , 'city_cate_1_cate_2_cate_3' , 'location_city_cate_1' , 'location_city_cate_1_cate_2' , 'location_city_cate_1_cate_2_cate_3'], axis=1, inplace=True)
+
+print shop_info.head(5)
 
 shop_info = pd.merge(shop_info , city_info , on='city_name')
 
@@ -133,6 +157,9 @@ print user_pay.tail(5)
 
 for shop_id in range(774 , 2001):
 	data = generate_user_pay(user_pay, shop_id, time_index)
+	data['year'] = data['date'].split('-')[0]
+	data['month'] = data['date'].split('-')[1]
+	data['day'] = data['date'].split('-')[2]
 	name = shop_info[shop_info['shop_id'] == shop_id]['name'].values[0]
 	if(name == 'tianmen'):
 		data.to_csv('input/%d.csv' % shop_id, encoding='utf-8', index=False)
@@ -143,6 +170,3 @@ for shop_id in range(774 , 2001):
 	print 'complete %d'%shop_id
 
 print 'complete'
-
-
-
