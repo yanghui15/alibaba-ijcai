@@ -155,7 +155,7 @@ user_pay = pd.merge(user_pay , shop_info , on='shop_id')
 print user_pay.head(5)
 print user_pay.tail(5)
 
-for shop_id in range(1 , 2001):
+for shop_id in range(1 , 800):
 	data = generate_user_pay(user_pay, shop_id, time_index)
 	data['year'] = data['date'].apply(lambda x: x.split('-')[0])
 	data['month'] = data['date'].apply(lambda x: x.split('-')[1])
@@ -168,5 +168,6 @@ for shop_id in range(1 , 2001):
 		data = pd.merge(data, aqi_info, on='date', how='left')
 		data.to_csv('input/%d.csv'%shop_id , encoding = 'utf-8' , index = False)
 	print 'complete %d'%shop_id
+	del data
 
 print 'complete'
