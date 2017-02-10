@@ -33,10 +33,12 @@ plt.style.use('ggplot')
 
 work_path = '../..'
 
-shop_id = 1
+shop_id = 58
 
 data = pd.read_csv('input/%d.csv'%shop_id , encoding='utf-8')
 data = data[['result']]
+
 data.plot(kind='line')
 plt.show()
 
+size = data.shape[0]
